@@ -1,0 +1,144 @@
+@import "tailwindcss";
+
+:root {
+  --background: #000000;
+  --foreground: #ededed;
+
+  /* Default TRONX Restaurant Theme Variables */
+  --restaurant-primary: #541e24;
+  --restaurant-primary-light: #6e272f;
+  --restaurant-primary-dark: #3a1317;
+  --restaurant-secondary: #220d0f;
+  --restaurant-accent: #dfb28e;
+  --restaurant-accent-light: #f1cfb3;
+  --restaurant-background: #ffffff;
+  --restaurant-text: #1e1415;
+  --restaurant-text-muted: #705e60;
+  --restaurant-border-radius: 1rem;
+  --restaurant-button-style: filled;
+
+  --customer-ivory: #faf5ef;
+  --customer-cream: #fbf6f0;
+  --customer-sand: #f4e9df;
+  --customer-border: #e6d8cb;
+  --customer-border-light: #f5ebe1;
+  --customer-wine: var(--restaurant-primary);
+  --customer-text: var(--restaurant-text);
+  --customer-muted: var(--restaurant-text-muted);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-restaurant-primary: var(--restaurant-primary);
+  --color-restaurant-primary-light: var(--restaurant-primary-light);
+  --color-restaurant-primary-dark: var(--restaurant-primary-dark);
+  --color-restaurant-secondary: var(--restaurant-secondary);
+  --color-restaurant-accent: var(--restaurant-accent);
+  --color-restaurant-background: var(--restaurant-background);
+  --color-restaurant-text: var(--restaurant-text);
+  --color-restaurant-text-muted: var(--restaurant-text-muted);
+  --radius-restaurant: var(--restaurant-border-radius);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-playfair), "Playfair Display", Georgia, "Times New Roman", serif;
+}
+
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+}
+
+.customer-menu {
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  overflow-x: clip;
+  background-color: var(--customer-ivory);
+}
+
+.customer-menu .font-serif {
+  font-family: var(--font-playfair), "Playfair Display", "Didot", "Bodoni MT", Georgia, "Times New Roman", serif;
+}
+
+.customer-card {
+  border-color: var(--customer-border);
+  background: #ffffff;
+  box-shadow: 0 4px 20px -2px rgba(45, 18, 20, 0.05), 0 2px 6px -1px rgba(45, 18, 20, 0.03);
+  border-radius: var(--restaurant-border-radius);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .customer-card:hover {
+    border-color: color-mix(in srgb, var(--restaurant-primary) 40%, var(--customer-border));
+    box-shadow: 0 20px 35px -8px rgba(96, 46, 49, 0.16), 0 8px 16px -4px rgba(96, 46, 49, 0.08);
+    transform: translateY(-4px);
+  }
+}
+
+/* Cinematic Keyframes & Utilities */
+@keyframes cinematicFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cinematicGlow {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes subtleFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-cinematic-in {
+  animation: cinematicFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-subtle-float {
+  animation: subtleFloat 3s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Cross-browser scrollbar hiding utility */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.scrollbar-none {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
