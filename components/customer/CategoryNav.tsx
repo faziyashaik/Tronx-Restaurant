@@ -51,9 +51,9 @@ export default function CategoryNav({
   const handleCategoryClick = (categoryId: string) => {
     onCategoryChange(categoryId);
 
-    const targetSection = document.getElementById(
-      categoryId === "all" ? "menu-content" : `category-${categoryId}`,
-    );
+    const targetSection =
+      document.getElementById("category-carousel-menu") ||
+      document.getElementById("menu-content");
     if (targetSection) {
       targetSection.scrollIntoView({
         behavior: "smooth",

@@ -63,7 +63,7 @@ function VideoPlayer({
   controls = false,
   loop = true,
   playbackPriority = false,
-  hovered = false,
+  hovered,
   objectPosition = "center center",
   objectFit = "cover",
   className = "",
@@ -75,8 +75,8 @@ function VideoPlayer({
   const activeRef = useRef(false);
 
   const [isActive, setIsActive] = useState(false);
-  const [viewportRatio, setViewportRatio] = useState(0);
   const [hasFinePointer, setHasFinePointer] = useState(false);
+  const [isNarrowViewport, setIsNarrowViewport] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
     if (typeof window === "undefined") return false;
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -86,6 +86,7 @@ function VideoPlayer({
   const [hasError, setHasError] = useState(false);
 
   const currentSource = hasFallbackActive && fallbackVideoUrl ? fallbackVideoUrl : videoUrl;
+  const isHoverControlled = hovered !== undefined;
 
   // Reduced motion preference
   useEffect(() => {
@@ -104,44 +105,43 @@ function VideoPlayer({
     return () => mediaQuery.removeEventListener("change", update);
   }, []);
 
-  // Viewport intersection observer: detects when card is visible on screen
+  // Mobile layout detection for browser emulation and tablets that report a mouse.
   useEffect(() => {
-    const element = containerRef.current;
-    if (!element) return;
-    const observer = new IntersectionObserver(
-      ([entry]) =>
-        setViewportRatio(entry.isIntersecting ? entry.intersectionRatio : 0),
-      { threshold: [0, 0.05, 0.2, 0.5, 0.8, 1] },
-    );
-    observer.observe(element);
-    return () => observer.disconnect();
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const update = () => setIsNarrowViewport(mediaQuery.matches);
+    update();
+    mediaQuery.addEventListener("change", update);
+    return () => mediaQuery.removeEventListener("change", update);
   }, []);
 
   const setPlayerActive = useCallback((active: boolean) => {
     activeRef.current = active;
     if (!active) {
-      videoRef.current?.pause();
+      const video = videoRef.current;
+      if (video) {
+        video.pause();
+        video.currentTime = 0;
+      }
+      setIsVideoLoaded(false);
     }
     setIsActive((current) => (current === active ? current : active));
   }, []);
 
-  // Player coordination: when card is in viewport, play the food video!
+  // Player coordination: previews only run for deliberate hover on fine pointers.
   useEffect(() => {
-    // Visible in viewport plays immediately; hover gives top priority
+    const shouldPlayOnHover =
+      isHoverControlled && hasFinePointer && !isNarrowViewport && hovered;
+    const shouldPlayImmediately = !isHoverControlled && autoPlay;
     const eligibleRatio = prefersReducedMotion
       ? 0
-      : playbackPriority
-        ? Math.max(viewportRatio, 1)
-        : viewportRatio > 0.05
-          ? Math.max(viewportRatio, 0.8)
-          : hovered
-            ? 1
-            : 0;
+      : shouldPlayOnHover || shouldPlayImmediately
+        ? 1
+        : 0;
 
     const playerId = idRef.current;
     candidates.set(playerId, {
       ratio: eligibleRatio,
-      priority: playbackPriority ? 2 : hovered ? 1.5 : (viewportRatio > 0.05 ? 1 : 0),
+      priority: shouldPlayOnHover || shouldPlayImmediately ? (playbackPriority ? 2.5 : 2) : 0,
       setActive: setPlayerActive,
     });
     coordinateActivePlayers();
@@ -150,7 +150,7 @@ function VideoPlayer({
       candidates.delete(playerId);
       coordinateActivePlayers();
     };
-  }, [hasFinePointer, hovered, playbackPriority, prefersReducedMotion, setPlayerActive, viewportRatio]);
+  }, [autoPlay, hasFinePointer, hovered, isHoverControlled, isNarrowViewport, playbackPriority, prefersReducedMotion, setPlayerActive]);
 
   const destroyHls = useCallback(() => {
     hlsRef.current?.destroy();
@@ -219,7 +219,11 @@ function VideoPlayer({
 
   useEffect(() => {
     if (!isActive || hasError || prefersReducedMotion) {
-      videoRef.current?.pause();
+      const video = videoRef.current;
+      if (video) {
+        video.pause();
+        video.currentTime = 0;
+      }
       hlsRef.current?.stopLoad();
       return;
     }
@@ -250,7 +254,7 @@ function VideoPlayer({
   return (
     <div
       ref={containerRef}
-      className={`relative h-full w-full overflow-hidden ${className}`}
+      className={`h-full w-full overflow-hidden ${className}`}
     >
       <video
         ref={videoRef}
@@ -261,12 +265,19 @@ function VideoPlayer({
         playsInline
         controls={controls}
         preload="metadata"
-        aria-label={title ? `${title} cinematic video preview` : "Dish video preview"}
+        aria-hidden={isHoverControlled ? true : undefined}
+        aria-label={
+          isHoverControlled
+            ? undefined
+            : title
+              ? `${title} cinematic video preview`
+              : "Dish video preview"
+        }
         style={{
           objectPosition,
           objectFit,
         }}
-        className={`h-full w-full transition-opacity duration-500 ease-out ${
+        className={`absolute inset-0 h-full w-full transition-opacity duration-500 ease-out ${
           isVideoLoaded ? "opacity-100" : "opacity-0"
         }`}
         onCanPlay={play}

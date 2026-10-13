@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Dish, RestaurantMenu } from "@/types";
 import type { TableStatus } from "@/types";
 import CategoryNav from "@/components/customer/CategoryNav";
-import MenuSection from "@/components/customer/MenuSection";
+import PremiumMenuCarousel from "@/components/customer/PremiumMenuCarousel";
 import RestaurantHero from "@/components/customer/RestaurantHero";
 import TronxNavbar from "@/components/customer/TronxNavbar";
 import TronxAboutSection from "@/components/customer/TronxAboutSection";
@@ -695,67 +695,12 @@ export default function CustomerMenu({
   };
 
   useEffect(() => {
-    if (activeCategories.length === 0) return;
-
-    const observerCallback: IntersectionObserverCallback = () => {
-      if (isManualScrolling.current) return;
-
-      if (window.scrollY < 180) {
-        const firstId = activeCategories[0].id;
-        setActiveCategory((prev) => (prev === firstId ? prev : firstId));
-        return;
-      }
-
-      const current = activeCategories.find((cat) => {
-        const el = document.getElementById(`category-${cat.id}`);
-        if (!el) return false;
-        const rect = el.getBoundingClientRect();
-        return rect.top <= 160 && rect.bottom > 120;
-      });
-
-      if (current) {
-        setActiveCategory((prev) => (prev === current.id ? prev : current.id));
-      }
-    };
-
-    const observer = new IntersectionObserver(observerCallback, {
-      root: null,
-      rootMargin: "-80px 0px -40% 0px",
-      threshold: [0, 0.25, 0.5, 0.75, 1.0],
-    });
-
-    activeCategories.forEach((cat) => {
-      const element = document.getElementById(`category-${cat.id}`);
-      if (element) {
-        observer.observe(element);
-      }
-    });
-
-    const handleScroll = () => {
-      if (isManualScrolling.current) return;
-      const isAtBottom =
-        window.innerHeight + window.scrollY >=
-        document.documentElement.scrollHeight - 40;
-
-      if (isAtBottom && activeCategories.length > 0) {
-        const lastCategoryId =
-          activeCategories[activeCategories.length - 1].id;
-        setActiveCategory((prev) =>
-          prev === lastCategoryId ? prev : lastCategoryId,
-        );
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-
     return () => {
-      observer.disconnect();
-      window.removeEventListener("scroll", handleScroll);
       if (manualScrollTimeout.current) {
         clearTimeout(manualScrollTimeout.current);
       }
     };
-  }, [activeCategories]);
+  }, []);
 
   const clearAllFilters = () => {
     setSearchQuery("");
@@ -989,21 +934,20 @@ export default function CustomerMenu({
           </div>
         )}
 
-        {/* Category Sections */}
-        {activeCategories.map((category, index) => (
-          <MenuSection
-            key={category.id}
-            category={category}
+        {filteredDishes.length > 0 && (
+          <PremiumMenuCarousel
+            key={activeCategory || "all"}
+            categories={activeCategories}
+            activeCategory={activeCategory}
             dishes={filteredDishes}
             onDishClick={(dish: Dish) => setSelectedDishId(dish.id)}
+            onCategoryChange={handleCategorySelect}
             onQuickAdd={handleQuickAdd}
             favorites={favorites}
             onToggleFavorite={toggleFavorite}
-            isFirstCategory={index === 0}
             videoMenuEnabled={videoMenuEnabled}
-            hasNextCategory={index < activeCategories.length - 1}
           />
-        ))}
+        )}
       </div>
 
       {/* 5. TRONX Culinary Story / About Us Section */}
